@@ -9,7 +9,7 @@ describe UsersController do
       response.should be_success
     end
 
-    it "正しいタイトルが設定されているか" do
+    it "正しいタイトルが表示されること" do
       get 'new'
       response.should have_selector("title", :content => "Ruby on Rails Tutorial Sample App | Sign up")
     end
