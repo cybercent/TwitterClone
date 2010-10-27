@@ -1,17 +1,17 @@
 require 'spec_helper'
 
 describe UsersController do
+  render_views
 
-  describe "GET 'new'" do
-    it "should be successful" do
+  describe "GET 'ユーザーが新規登録するとき'" do
+    it "新規登録フォームが表示されること" do
       get 'new'
       response.should be_success
     end
-  end
 
-  if "正しいタイトルが設定されているか" do
-    get 'new'
-    response.should have_selector('title', :content => "Sign up")
+    it "正しいタイトルが設定されているか" do
+      get 'new'
+      response.should have_selector("title", :content => "Ruby on Rails Tutorial Sample App | Sign up")
+    end
   end
-
 end
