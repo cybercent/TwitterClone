@@ -8,6 +8,14 @@ Bundler.require(:default, Rails.env) if defined?(Bundler)
 
 module TwitterClone
   class Application < Rails::Application
+
+    ### Part of a Spork hack. See http://bit.ly/arY19y
+    if Rails.env.test?
+      initializer :after => :initialize_dependency_mechanism do
+        ActiveSupport::Dependencies.mechanism = :load
+      end
+    end
+
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
