@@ -5,13 +5,126 @@ describe User do
 
   before(:each) do
     @attr = {
-      :name => "hoge",
-      :email => "hoge@hoge.com",
-      :password => "hogehoge",
-      :password_confirmation => "hogehoge"
+      :name => "Example User",
+      :email => "user@example.com",
+      :password => "foobar",
+      :password_confirmation => "foobar"
     }
   end
 
+  it "新規ユーザーを追加できること" do
+    User.create!(@attr)
+  end
+
+  it "新規ユーザーは名前が必須であること" do
+    no_name_user = User.new(@attr.merge(:name => ""))
+    no_name_user.should_not be_valid
+  end
+
+  it "新規ユーザーは名前が50文字以下であること" do
+    long_name = "a" * 51
+    long_name_user = User.new(@attr.merge(:name => long_name))
+    long_name_user.should_not be_valid
+  end
+
+  it "正しいメールアドレスにて検証がOKとなること" do
+    addresses = %w[user@foo.com THE_USER@foo.bar.org first.last@foo.jp]
+    addresses.each do |address|
+      valid_email_user = User.new(@attr.merge(:email => address))
+      valid_email_user.should be_valid
+    end
+  end
+
+  it "不正なメールアドレスにて検証がNGとなること" do
+    addresses = %w[user@foo,com user_at_foo.org example.user@foo.]
+    addresses.each do |address|
+      invalid_email_user = User.new(@attr.merge(:email => address))
+      invalid_email_user.should_not be_valid
+    end
+  end
+
+  it "重複したメールアドレスは検証がNGとなること" do
+    User.create!(@attr)
+    user_with_duplicate_email = User.new(@attr)
+    user_with_duplicate_email.should_not be_valid
+  end
+
+  it "メールアドレスは大文字であっても重複したメールアドレスは検証がNGとなること" do
+    upcased_email = @attr[:email].upcase
+    User.create!(@attr.merge(:email => upcased_email))
+    user_with_duplicate_email = User.new(@attr)
+    user_with_duplicate_email.should_not be_valid
+  end
+
+  describe "パスワード検証" do
+
+    it "必須であること" do
+      User.new(@attr.merge(:password => "", :password_confirmation => "")).
+      should_not be_valid
+    end
+  
+    it "確認用パスワードと一致すること" do
+      User.new(@attr.merge(:password_confirmation => "invalid")).
+      should_not be_valid
+    end
+  
+    it "短いパスワードは受け付けないこと" do
+      short = "a" * 5
+      hash = @attr.merge(:password => short, :password_confirmation => short)
+      User.new(hash).should_not be_valid
+    end
+  
+    it "長すぎるパスワードは受け付けないこと" do
+      long = "a" * 41
+      hash = @attr.merge(:password => long, :password_confirmation => long)
+      User.new(hash).should_not be_valid
+    end
+
+  end
+
+  describe "パスワード暗号化" do
+
+    before(:each) do
+      @user = User.create!(@attr)
+    end
+
+    it "暗号化パスワードの属性を持っていること" do
+      @user.should respond_to(:encrypted_password)
+    end
+
+    it "暗号化されたパスワードが設定されていること" do
+      @user.encrypted_password.should_not be_blank
+    end
+
+    describe "has_password? メソッド" do
+
+      it "パスワード一致にてtrueを返すこと" do
+        @user.has_password?(@attr[:password]).should be_true
+      end
+
+      it "パスワード不一致にてfalseを返すこと" do
+        @user.has_password?("invalid").should be_false
+      end
+    end
+
+    describe "authenticate メソッド" do
+
+      it "メールアドレス/パスワード不一致にてnilを返すこと" do
+        wrong_password_user = User.authenticate(@attr[:email], "wrongpass")
+        wrong_password_user.should be_nil
+      end
+
+      it "存在しないメールアドレスのユーザーにてnilを返すこと" do
+        nonexistent_user = User.authenticate("bar@foo.com", @attr[:password])
+        nonexistent_user.should be_nil
+      end
+
+      it "存在するメールアドレス/パスワードを持つユーザーにてユーザー情報を返すこと" do
+        matching_user = User.authenticate(@attr[:email], @attr[:password])
+        matching_user.should == @user
+      end
+    end
+  end
 
   describe "micropost associations" do
     before(:each) do
