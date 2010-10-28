@@ -26,5 +26,30 @@ describe SessionsController do
         response.should render_template('new')
       end
     end
+    
+    describe "成功するパターン" do
+      before(:each) do
+        @user = Factory(:user)
+        @attr = { :email => @user.email, :password => @user.password }
+      end
+      it "ログインできること" do
+        post :create, :session => @attr
+        controller.current_user.should == @user
+        controller.should be_signed_in
+      end
+      it "つぶやきページが表示されること" do
+        post :create, :session => @attr
+        redirect_to user_path(@user)
+      end
+    end
+  end
+
+  describe "DELETE 'Sign outするとき'" do
+    it "ログアウトできること" do
+      test_sign_in(Factory(:user))
+      delete :destroy
+      controller.should_not be_signed_in
+      response.should redirect_to(root_path)
+    end
   end
 end
