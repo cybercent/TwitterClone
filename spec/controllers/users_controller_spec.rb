@@ -2,13 +2,40 @@ require 'spec_helper'
 
 describe UsersController do
   render_views
-
-  describe "GET 'ユーザーが新規登録するとき'" do
-    it "新規登録フォームが表示されること" do
-      get 'new'
-      response.should be_success
+  
+  describe "GET 'index'" do
+    describe "for non-signed_in users" do
+      it "should deny access" do
+        get :index
+        response.should redirect_to(signin_path)
+        flash[:notice].should =~ /sign in/i
+      end
     end
-
+    describe "for signed-in users" do
+      before(:each) do
+        @user = test_sign_in(Factory(:user))
+        second = Factory(:user, :email => "another@example.com")
+        third = Factory(:user, :email => "another@example.org")
+        @users = [@user, second, third]
+      end
+      it "should be successful" do
+        get :index
+        response.should be_success
+      end
+      it "" do
+        get :index
+        response.should have_selector("title", :content => "All users")
+      end
+      it "" do
+        get :index
+        @users.each do |u|
+          response.should have_selector("li", :content => u.name)
+        end
+      end
+    end
+  end
+  
+  describe "GET 'ユーザーが新規登録するとき'" do
     it "正しいタイトルが表示されること" do
       get 'new'
       response.should have_selector("title", :content => "Ruby on Rails Tutorial Sample App | Sign up")
@@ -105,6 +132,119 @@ describe UsersController do
       it "ウェルカムメッセージが表示されること" do
         post :create, :user => @attr
         flash[:success].should =~ /welcome to the sample app/i
+      end
+    end
+  end
+  
+  describe "GET 'ユーザー情報を変更するとき'" do
+    
+    before(:each) do
+      @user = Factory(:user)
+      test_sign_in(@user)
+    end
+    
+    it "ユーザー情報変更ページが表示されること" do
+      get :edit, :id => @user
+      response.should be_success
+    end
+    
+    it "正しいタイトルが表示されること" do
+      get :edit, :id => @user
+      response.should have_selector("title", :content => "Edit user")
+    end
+    
+    it "Gravatarリンクが変更されること" do
+      get :edit, :id => @user
+      gravatar_url = "http://gravatar.com/emails"
+      response.should have_selector("a", :href => gravatar_url, :content => "change")
+    end
+  end
+  
+  describe "PUT 'ユーザー情報変更を確定するとき'" do
+    
+    before(:each) do
+      @user = Factory(:user)
+      test_sign_in(@user)
+    end
+    
+    describe "失敗するパターン" do
+      
+      before(:each) do
+        @invalid_attr = { :email => "", :name => "" }
+      end
+      
+      it "ユーザー情報変更ページが表示されること" do
+        put :update, :id => @user, :user => @invalid_attr
+        response.should render_template('edit')
+      end
+
+      it "正しいタイトルが表示されること" do
+        put :update, :id => @user, :user => @invalid_attr
+        response.should have_selector("title", :content => "Edit user")
+      end
+    end
+    
+    describe "成功するパターン" do
+      
+      before(:each) do
+        @attr = { :name => "New Name", :email => "user@example.org",
+                        :password => "barbaz", :password_confirmation => "barbaz" }
+      end
+      
+      it "ユーザー情報が変更されること" do
+        put :update, :id => @user, :user => @attr
+        user = assigns(:user)
+        @user.reload
+        @user.name.should == user.name
+        @user.email.should == user.email
+      end
+      
+      it "つぶやきページが表示されること" do
+        put :update, :id => @user, :user => @attr
+        response.should redirect_to(user_path(@user))
+      end
+      
+      it "変更メッセージが表示されること" do
+        put :update, :id => @user, :user => @attr
+        flash[:success].should =~ /updated/
+      end
+    end
+  end
+  
+  describe "ユーザー情報変更、更新ページを直接表示したとき" do
+    
+    before(:each) do
+      @user = Factory(:user)
+    end
+    
+    describe "ログインしていないユーザーの場合" do
+      
+      it "ユーザー情報変更ページにアクセスできないこと" do
+        get :edit, :id => @user
+        response.should redirect_to(signin_path)
+      end
+      
+      it "ユーザー情報の更新ができないこと" do
+        put :update, :id => @user, :user => {}
+        response.should redirect_to(signin_path)
+      end
+    end
+    
+    describe "ログインしているユーザーの場合" do
+      
+      before(:each) do
+        wrong_user = Factory(:user, :email => "user@example.net")
+        test_sign_in(wrong_user)
+      end
+      
+      it "メールアドレスが不正の場合、ユーザー情報変更ページにアクセスできないこと" do
+        get :edit, :id => @user
+        response.should redirect_to(root_path)
+      end
+      
+      it "メールアドレスが不正の場合、ユーザー情報の更新ができないこと" do
+        get :update, :id => @user, :user => {}
+        response.should redirect_to(root_path)
       end
     end
   end
