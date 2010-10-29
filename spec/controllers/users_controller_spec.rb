@@ -164,7 +164,7 @@ describe UsersController do
       
       it "つぶやきページが表示されること" do
         post :create, :user => @attr
-        response.should redirect_to(user_path(assigns(:user)))
+        response.should redirect_to(root_path)
       end
       
       it "ウェルカムメッセージが表示されること" do

@@ -39,7 +39,7 @@ describe SessionsController do
       end
       it "つぶやきページが表示されること" do
         post :create, :session => @attr
-        redirect_to user_path(@user)
+        response.should redirect_to(root_path)
       end
     end
   end
