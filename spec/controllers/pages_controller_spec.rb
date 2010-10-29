@@ -8,14 +8,34 @@ describe PagesController do
   end
 
   describe "GET 'トップページを閲覧するとき'" do
-    it "正常に表示されること" do
-      get 'home'
-      response.should be_success
+    describe "ログイン未済の場合" do
+      before(:each) do
+        get :home
+      end
+
+      it "正常に表示されること" do
+        response.should be_success
+      end
+
+      it "正しいタイトルが表示されること" do
+        response.should have_selector("title", :content => "#{@base_title} | Home")
+      end
     end
 
-    it "正しいタイトルが表示されること" do
-      get 'home'
-      response.should have_selector("title", :content => "#{@base_title} | Home")
+    describe "ログイン済みの場合" do
+      before(:each) do
+        @user = test_sign_in(Factory(:user))
+        other_user = Factory(:user, :email => Factory.next(:email))
+        other_user.follow!(@user)
+      end
+
+      it "正しいフォロー、フォロワーが表示されること" do
+        get :home
+        response.should have_selector("a", :href => following_user_path(@user),
+          :content => "0 following")
+        response.should have_selector("a", :href => followers_user_path(@user),
+          :content => "1 follower")
+      end
     end
   end
 
