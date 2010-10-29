@@ -38,6 +38,8 @@ class User < ActiveRecord::Base
 
   before_save :encrypt_password
 
+  scope :admin, where(:admin => true)
+
   def has_password?(submitted_password)
     encrypted_password == encrypt(submitted_password)
   end
@@ -70,6 +72,10 @@ class User < ActiveRecord::Base
     Micropost.where("user_id = ?", id)
   end
 
+
+  def feed
+    Micropost.from_users_followed_by(self)
+  end
 
   private
 
