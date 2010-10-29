@@ -25,11 +25,11 @@ describe UsersController do
         get :index
         response.should be_success
       end
-      it "" do
+      it "タイトルにAll users と表示されていること" do
         get :index
         response.should have_selector("title", :content => "All users")
       end
-      it "" do
+      it "ユーザ名一覧が表示されていること" do
         get :index
         @users.each do |u|
           response.should have_selector("li", :content => u.name)
