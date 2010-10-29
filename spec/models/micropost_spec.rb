@@ -47,7 +47,7 @@ describe Micropost do
       @third_user = Factory(:user, :email => Factory.next(:email))
       
       @user_post = @user.microposts.create!(:content => "foo")
-      @second_post = @other_user.microposts.create!(:content => "bar")
+      @other_post = @other_user.microposts.create!(:content => "bar")
       @third_post = @third_user.microposts.create!(:content => "baz")
       
       @user.follow!(@other_user)
@@ -58,7 +58,7 @@ describe Micropost do
     end
     
     it "should include the followed user's microposts" do
-      Microposts.from_users_followed_by(@user).include?(@other_post).should be_true
+      Micropost.from_users_followed_by(@user).include?(@other_post).should be_true
     end
   end
 

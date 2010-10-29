@@ -187,7 +187,7 @@ describe User do
         followed = Factory(:user, :email => Factory.next(:email))
         mp3 = Factory(:micropost, :user => followed)
         @user.follow!(followed)
-        @user.feed.include?(followed).should be_true
+        @user.feed.include?(mp3).should be_true
       end
     end
   end
